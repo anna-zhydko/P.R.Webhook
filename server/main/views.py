@@ -5,12 +5,27 @@ import json
 from django.conf import settings
 import hashlib
 import http.client as httplib
+from .models import PullRequest
+
+
+def saves_to_db(values_to_save):
+    number = values_to_save["pull_request"]["number"]
+    author = values_to_save["pull_request"]["user"]["login"]
+    title = values_to_save["pull_request"]["title"]
+    link = values_to_save["pull_request"]["url"]
+    updated_at = values_to_save["pull_request"]["updated_at"]
+    review_requested = ", ".join([reviewer['login'] for reviewer in values_to_save["pull_request"]["requested_reviewers"]])
+    # TODO add requested_teams
+
+    pr = PullRequest(number=number, author=author, title=title, link=link, updated_at=updated_at, review_requested=review_requested)
+    pr.save()
 
 
 def handle_webhook(event, payload):
-    """Simple webhook handler that prints the event and payload to the console"""
     print('Received the {} event'.format(event))
-    print(json.dumps(payload, indent=4))
+
+    if payload["action"] == "review_requested":
+        saves_to_db(payload)
 
 
 @csrf_exempt
@@ -23,15 +38,16 @@ def hello(request):
     #     return HttpResponseForbidden('Invalid signature header')
 
     # Sometimes the payload comes in as the request body, sometimes it comes in
-    # as a POST parameter. This will handle either case.
+    # as a POST parameter. This will handle either case. TODO: check if it's true
     if 'payload' in request.POST:
         payload = json.loads(request.POST['payload'])
     else:
         payload = json.loads(request.body)
 
     event = request.META['HTTP_X_GITHUB_EVENT']
+    print(f"{event} event has been received.")
 
-    # This is where you'll do something with the webhook
-    handle_webhook(event, payload)
+    if event == "pull_request":
+        handle_webhook(event, payload)
 
-    return HttpResponse('Webhook received', status=httplib.ACCEPTED)
+        return HttpResponse('Webhook received', status=httplib.ACCEPTED)

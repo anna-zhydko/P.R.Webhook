@@ -4,7 +4,7 @@ from django.db import models
 
 
 class PullRequest(models.Model):
-    number = models.CharField(max_length=20)
+    number = models.IntegerField()
     title = models.CharField(max_length=200)
     author = models.CharField(max_length=50)
     link = models.CharField(max_length=200)
