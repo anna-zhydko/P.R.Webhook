@@ -5,7 +5,9 @@ from .models import PullRequest
 
 
 class PullRequestAdmin(admin.ModelAdmin):
-    list_display = ["number", "title", "author", "link", "updated_at", "review_requested"]
+    list_display = ["number", "title", "author", "link", "updated_at", "review_requested", "claimed"]
+    list_editable = ["claimed"]
+    list_display_links = ["link", "number"]
 
 
 admin.site.register(PullRequest, PullRequestAdmin)
