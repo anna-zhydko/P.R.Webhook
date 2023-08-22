@@ -17,8 +17,11 @@ def saves_to_db(values_to_save):
     review_requested = ", ".join([reviewer['login'] for reviewer in values_to_save["pull_request"]["requested_reviewers"]])
     # TODO add requested_teams
 
-    pr = PullRequest(number=number, author=author, title=title, link=link, updated_at=updated_at, review_requested=review_requested)
-    pr.save()
+    obj, created = PullRequest.objects.update_or_create(
+        number=number, link=link,
+        defaults={"author": author, "title": title, "updated_at": updated_at, "review_requested": review_requested}
+    )
+    print(obj, created)
 
 
 def handle_webhook(event, payload):
@@ -50,4 +53,6 @@ def hello(request):
     if event == "pull_request":
         handle_webhook(event, payload)
 
-        return HttpResponse('Webhook received', status=httplib.ACCEPTED)
+        return HttpResponse('Webhook pull_request received', status=httplib.ACCEPTED)
+
+    return HttpResponse()
