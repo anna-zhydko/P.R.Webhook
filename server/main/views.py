@@ -8,27 +8,19 @@ import http.client as httplib
 from .models import PullRequest
 
 
-def saves_to_db(values_to_save):
-    number = values_to_save["pull_request"]["number"]
-    author = values_to_save["pull_request"]["user"]["login"]
-    title = values_to_save["pull_request"]["title"]
-    link = values_to_save["pull_request"]["url"]
-    updated_at = values_to_save["pull_request"]["updated_at"]
-    review_requested = ", ".join([reviewer['login'] for reviewer in values_to_save["pull_request"]["requested_reviewers"]])
-    # TODO add requested_teams
+def save_webhook_payload(payload):
+    number = payload["pull_request"]["number"]
+    author = payload["pull_request"]["user"]["login"]
+    title = payload["pull_request"]["title"]
+    link = payload["pull_request"]["url"]
+    updated_at = payload["pull_request"]["updated_at"]
+    review_requested = ", ".join([reviewer['login'] for reviewer in payload["pull_request"]["requested_reviewers"]])
 
     obj, created = PullRequest.objects.update_or_create(
         number=number, link=link,
         defaults={"author": author, "title": title, "updated_at": updated_at, "review_requested": review_requested}
     )
     print(obj, created)
-
-
-def handle_webhook(event, payload):
-    print('Received the {} event'.format(event))
-
-    if payload["action"] == "review_requested":
-        saves_to_db(payload)
 
 
 @csrf_exempt
@@ -49,7 +41,7 @@ def hello(request):
             event = request.META['HTTP_X_GITHUB_EVENT']
 
             if event == "pull_request":
-                handle_webhook(event, payload)
+                save_webhook_payload(payload)
                 return JsonResponse({'message': 'f{event} event has been received.'}, status=200)
 
         except json.JSONDecodeError:
