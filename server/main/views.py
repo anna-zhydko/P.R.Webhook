@@ -1,4 +1,4 @@
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import hmac
 import json
@@ -33,26 +33,26 @@ def handle_webhook(event, payload):
 
 @csrf_exempt
 def hello(request):
-    # # Check the X-Hub-Signature header to make sure this is a valid request.
-    # github_signature = request.META['HTTP_X_HUB_SIGNATURE']
-    # signature = hmac.new(settings.SECRET_KEY, request.body, hashlib.sha1)
-    # expected_signature = 'sha1=' + signature.hexdigest()
-    # if not hmac.compare_digest(github_signature, expected_signature):
-    #     return HttpResponseForbidden('Invalid signature header')
+    # Check the X-Hub-Signature header to make sure this is a valid request.
+    github_signature = request.META['HTTP_X_HUB_SIGNATURE']
+    secret_bytes = bytes(settings.SECRET_KEY, 'utf-8')
 
-    # Sometimes the payload comes in as the request body, sometimes it comes in
-    # as a POST parameter. This will handle either case. TODO: check if it's true
-    if 'payload' in request.POST:
-        payload = json.loads(request.POST['payload'])
-    else:
-        payload = json.loads(request.body)
+    signature = hmac.new(secret_bytes, request.body, hashlib.sha1)
+    expected_signature = 'sha1=' + signature.hexdigest()
 
-    event = request.META['HTTP_X_GITHUB_EVENT']
-    print(f"{event} event has been received.")
+    if not hmac.compare_digest(github_signature, expected_signature):
+        return HttpResponseForbidden('Invalid signature header')
 
-    if event == "pull_request":
-        handle_webhook(event, payload)
+    if request.method == "POST":
+        try:
+            payload = json.loads(request.body.decode('utf-8'))
+            event = request.META['HTTP_X_GITHUB_EVENT']
 
-        return HttpResponse('Webhook pull_request received', status=httplib.ACCEPTED)
+            if event == "pull_request":
+                handle_webhook(event, payload)
+                return JsonResponse({'message': 'f{event} event has been received.'}, status=200)
 
-    return HttpResponse()
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON payload'}, status=400)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
