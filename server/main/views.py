@@ -9,6 +9,11 @@ from .models import PullRequest
 
 
 def save_webhook_payload(payload):
+    """
+    Save webhook payload to django model
+
+    :param payload: The payload from webhook post request.
+    """
     number = payload["pull_request"]["number"]
     author = payload["pull_request"]["user"]["login"]
     title = payload["pull_request"]["title"]
@@ -25,6 +30,13 @@ def save_webhook_payload(payload):
 
 @csrf_exempt
 def hello(request):
+    """
+    Handle GitHub webhook events.
+
+    :param request: The HTTP request object.
+    :return: HTTP response with status code.
+    """
+
     # Check the X-Hub-Signature header to make sure this is a valid request.
     github_signature = request.META['HTTP_X_HUB_SIGNATURE']
     secret_bytes = bytes(settings.SECRET_KEY, 'utf-8')
