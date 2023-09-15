@@ -111,11 +111,3 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-# NGROK
-
-BASE_URL = "http://localhost:8000"
-
-DEV_SERVER = len(sys.argv) > 1 and sys.argv[1] == "runserver"
-
-USE_NGROK = os.environ.get("USE_NGROK", "False") == "True" and os.environ.get("RUN_MAIN", None) != "true"
