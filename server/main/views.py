@@ -4,7 +4,6 @@ import hmac
 import json
 from django.conf import settings
 import hashlib
-import http.client as httplib
 from .models import PullRequest
 
 
@@ -29,7 +28,7 @@ def save_webhook_payload(payload):
 
 
 @csrf_exempt
-def hello(request):
+def handle_webhook_event(request):
     """
     Handle GitHub webhook events.
 
