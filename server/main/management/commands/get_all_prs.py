@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 import requests
 from ...models import PullRequest
+from utils.common_functions import save_webhook_payload
 
 
 class FetchWebhookData:
@@ -50,26 +51,6 @@ class FetchWebhookData:
         deliveries_ids = [delivery["id"] for delivery in list_deliveries_for_webhook]
         return deliveries_ids
     
-    def _save_to_db(self, data):
-        """
-        Save the given data to the django model.
-
-        :param data: Delivery payload
-        :return: None
-        """
-        number = data["pull_request"]["number"]
-        author = data["pull_request"]["user"]["login"]
-        title = data["pull_request"]["title"]
-        link = data["pull_request"]["url"]
-        updated_at = data["pull_request"]["updated_at"]
-        review_requested = ", ".join(
-            [reviewer['login'] for reviewer in data["pull_request"]["requested_reviewers"]])
-
-        obj, created = PullRequest.objects.update_or_create(
-            number=number, link=link,
-            defaults={"author": author, "title": title, "updated_at": updated_at, "review_requested": review_requested}
-        )
-    
     def load_webhook_data(self):
         """
         Retrieve payload from all deliveries via their ids
@@ -86,7 +67,7 @@ class FetchWebhookData:
                                           f"{self.owner}/{self.repo}/hooks/{webhook_id}/deliveries/{delivery_id}")
             if delivery["action"] == "review_requested":
                 print('Received the {} event'.format(delivery["action"]))
-                self._save_to_db(data=delivery["request"]["payload"])
+                save_webhook_payload(delivery["request"]["payload"])
 
 
 class Command(BaseCommand):
