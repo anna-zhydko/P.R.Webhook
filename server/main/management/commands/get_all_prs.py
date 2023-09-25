@@ -1,6 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
 import requests
-from ...models import PullRequest
 from utils.common_functions import save_webhook_payload
 from django.conf import settings
 
