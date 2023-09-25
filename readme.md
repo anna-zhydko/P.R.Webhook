@@ -1,6 +1,4 @@
-to start ngrok:
-ngrok http 8000
+### Django Project that helps review PRs
 
-
-Useful links:
-* Django + ngrok + gitwebhooks + beginning = https://hackernoon.com/handling-webhooks-using-django-and-ngrok-b7ff27a6fd47
+The project uses Github webhooks to displays the PRs that need to be reviewed in realtime.
+The list of the PRs is displayed on admin page.
