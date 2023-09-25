@@ -2,10 +2,11 @@ from django.core.management.base import BaseCommand, CommandError
 import requests
 from ...models import PullRequest
 from utils.common_functions import save_webhook_payload
+from django.conf import settings
 
 
 class FetchWebhookData:
-    token = "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"
+    token = settings.GITHUB_TOKEN
     owner, repo = "anna-zhydko", "django-tutorial"
 
     def _get_response(self, url):
