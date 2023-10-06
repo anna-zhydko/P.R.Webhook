@@ -33,7 +33,12 @@ class FetchWebhookData:
         """
         url = f"https://api.github.com/repos/{self.owner}/{self.repo}/hooks"
         list_repository_webhooks = self._get_response(url)
-        return list_repository_webhooks[0]["id"]
+        try:
+            webhook_id = list_repository_webhooks[0]["id"]
+            return webhook_id
+        except KeyError as e:
+            print(f'KeyError: {e}. Probably there is no payload data - "Bad credentials" error has occurred.')
+            return
 
     def get_deliveries_ids_list(self):
         """
@@ -74,5 +79,9 @@ class Command(BaseCommand):
     help = "Retrieves all PRs from the given repository"
 
     def handle(self, *args, **options):
-        fetch_webhook_data = FetchWebhookData()
-        fetch_webhook_data.load_webhook_data()
+        try:
+            fetch_webhook_data = FetchWebhookData()
+            fetch_webhook_data.load_webhook_data()
+        except Exception as e:
+            print(f"An exception occurred: {e}")
+            return
