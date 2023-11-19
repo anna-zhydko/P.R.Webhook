@@ -1,4 +1,4 @@
-from main.models import PullRequest
+from main.models import PullRequest, ReviewerRequested, TeamRequested
 
 
 def save_webhook_payload(payload):
@@ -12,10 +12,37 @@ def save_webhook_payload(payload):
     title = payload["pull_request"]["title"]
     link = payload["pull_request"]["url"]
     updated_at = payload["pull_request"]["updated_at"]
-    review_requested = ", ".join([reviewer['login'] for reviewer in payload["pull_request"]["requested_reviewers"]])
 
-    obj, created = PullRequest.objects.update_or_create(
+    pr, created = PullRequest.objects.update_or_create(
         number=number, link=link,
-        defaults={"author": author, "title": title, "updated_at": updated_at, "review_requested": review_requested}
+        defaults={"author": author, "title": title, "updated_at": updated_at}
     )
-    print(obj, created)
+
+    reviewer_requested_list = payload["pull_request"]["requested_reviewers"]
+    for reviewer in reviewer_requested_list:
+        reviewer_login = reviewer["login"]
+        reviewer_github_id = reviewer["id"]
+        reviewer_url = reviewer["html_url"]
+
+        reviewer_requested, obj = ReviewerRequested.objects.update_or_create(
+            github_id=reviewer_github_id,
+            defaults={"login": reviewer_login, "url": reviewer_url}
+        )
+        pr.reviewer_requested.add(reviewer_requested)
+
+    team_requested_list = payload["pull_request"]["requested_teams"]
+    for team in team_requested_list:
+        team_name = team["name"]
+        team_github_id = team["id"]
+        team_slug = team["slug"]
+        team_url = team["url"]
+        team_description = team["description"]
+
+        team_requested, obj = TeamRequested.objects.update_or_create(
+            github_id=team_github_id,
+            defaults={"name": team_name, "github_id": team_github_id, "slug": team_slug,
+                      "url": team_url, "description": team_description}
+        )
+        pr.team_requested.add(team_requested)
+
+    print(pr, created)
